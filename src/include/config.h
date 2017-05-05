@@ -99,6 +99,7 @@ struct configuration {
     char *ipfix_export_template;
     char *tls_fingerprint_file;
     unsigned int num_subnets;    /*!< counts entries in subnet array */
+    unsigned int oui; // Include OUI from MAC 
 };
 
 

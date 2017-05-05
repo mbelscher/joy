@@ -335,7 +335,8 @@ static int usage (char *s) {
            "  cdist=F                    include compact byte distribution array using the mapping file, F\n" 
            "  entropy=1                  include byte entropy\n" 
            "  http=1                     include HTTP data\n" 
-           "  exe=1                      include information about host process associated with flow\n" 
+           "  exe=1                      include information about host process associated with flow\n"
+           "  oui=1                      include MAC Address OUI information with flow\n" 
            "  classify=1                 include results of post-collection classification\n" 
            "  num_pkts=N                 report on at most N packets per flow (0 <= N < %d)\n" 
            "  type=T                     select message type: 1=SPLT, 2=SALT\n" 
@@ -344,7 +345,7 @@ static int usage (char *s) {
            "  URLmodel=URL               URL to be used to retrieve classisifer updates\n" 
            "  model=F1:F2                change classifier parameters, SPLT in file F1 and SPLT+BD in file F2\n"
            "  hd=1                       include header description\n" 
-           "  URLlabel=URL               Full URL including filename to be used to retrieve label updates\n" 
+           "  URLlabel=URL               Full URL including filename to be used to retrieve label updates\n"
 	   get_usage_all_features(feature_list),
 	   MAX_NUM_PKT_LEN); 
     printf("RETURN VALUE                 0 if no errors; nonzero otherwise\n"); 

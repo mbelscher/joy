@@ -52,6 +52,7 @@
 #include "anon.h"     /* address anonymization           */
 #include "tls.h"      /* TLS awareness                   */
 #include "dns.h"      /* DNS awareness                   */
+#include "bacnet.h"
 #include "classify.h" /* inline classification           */
 #include "http.h"     /* http header data                */
 #include "procwatch.h"  /* process to flow mapping       */
@@ -425,6 +426,8 @@ static void flow_key_copy (struct flow_key *dst, const struct flow_key *src) {
     dst->sp = src->sp;
     dst->dp = src->dp;
     dst->prot = src->prot;
+    memcpy(&dst->oui_sa, &src->oui_sa, OUI_LEN);
+    memcpy(&dst->oui_da, &src->oui_da, OUI_LEN);
 }
 
 #define MAX_TTL 255
@@ -483,6 +486,8 @@ static void flow_record_init (/* @out@ */ struct flow_record *record,
     init_all_features(feature_list);
 
     header_description_init(&record->hd);
+
+    bacnet_init(record);
 
 #ifdef END_TIME
     record->end_time_next = NULL;
@@ -589,8 +594,10 @@ void flow_record_list_unit_test () {
     flow_record_list list;
     struct flow_record a, b, c, d;
     struct flow_record *rp;
-    struct flow_key k1 = { { 0xcafe }, { 0xbabe }, 0xfa, 0xce, 0xdd };
-    struct flow_key k2 = { { 0xdead }, { 0xbeef }, 0xfa, 0xce, 0xdd };
+    struct flow_key k1 = { { 0xcafe }, { 0xbabe }, 0xfa, 0xce, 0xdd, { 0x12, 0x34, 0x56  }, 
+			   { 0xFE, 0xDC, 0xBA  }};
+    struct flow_key k2 = { { 0xdead }, { 0xbeef }, 0xfa, 0xce, 0xdd, { 0x12, 0x34, 0x56 }, 
+			   { 0xAB, 0xCD, 0xEF }};
 
     flow_record_init(&a, &k1);
     flow_record_init(&b, &k2);
@@ -992,6 +999,12 @@ static void flow_record_print (const struct flow_record *record) {
     } else {
         zprintf(output, "\tda: %s\n", inet_ntoa(record->key.da));
     }
+
+    zprintf(output, "\toui_sa:");
+    zprintf_raw_as_hex(output, rec->key.oui_sa, OUI_LEN);
+    zprintf(output, "\toui_da:");
+    zprintf_raw_as_hex(output, rec->key.oui_da, OUI_LEN);
+
     zprintf(output, "\tsp: %u\n", record->key.sp);
     zprintf(output, "\tdp: %u\n", record->key.dp);
     zprintf(output, "\tpr: %u\n", record->key.prot);
@@ -1031,6 +1044,17 @@ static void flow_record_print (const struct flow_record *record) {
                flow_record_get_byte_count_entropy(record->byte_count, record->ob));
         }
     }
+
+    // Print Bacnet to result
+    zprintf(output, "\tbacnet_num_confirmed_req: %u\n", record->bacnet_source.num_confirmed_req);
+    zprintf(output, "\tbacnet_num_unconfirmed_req: %u\n", record->bacnet_source.num_unconfirmed_req);
+    zprintf(output, "\tbacnet_num_unconfirmed_req_broadcast: %u\n", record->bacnet_source.num_unconfirmed_req_broadcast);
+    zprintf(output, "\tbacnet_num_simple_ack: %u\n", record->bacnet_source.num_simple_ack);
+    zprintf(output, "\tbacnet_num_complex_ack: %u\n", record->bacnet_source.num_complex_ack);
+    zprintf(output, "\tbacnet_num_segment_ack: %u\n", record->bacnet_source.num_segment_ack);
+    zprintf(output, "\tbacnet_num_bvlc_foreign_request: %u\n", record->bacnet_source.num_bvlc_foreign_request);
+    zprintf(output, "\tbacnet_num_bvlc_result: %u\n", record->bacnet_source.num_bvlc_result);
+
 }
 #endif
 
@@ -1250,6 +1274,15 @@ static void flow_record_print_json (const struct flow_record *record) {
     } else {
         zprintf(output, "\"da\":\"%s\",", inet_ntoa(rec->key.da));
     }
+
+    if (config.oui) {
+        zprintf(output, "\"oui_sa\":");
+        zprintf_raw_as_hex(output, rec->key.oui_sa, OUI_LEN);
+        zprintf(output, ",\"oui_da\":");
+        zprintf_raw_as_hex(output, rec->key.oui_da, OUI_LEN);
+	zprintf(output, ",");
+    }
+
     zprintf(output, "\"pr\":%u,", rec->key.prot);
     if (1 || rec->key.prot == 6 || rec->key.prot == 17) {
         zprintf(output, "\"sp\":%u,", rec->key.sp);
@@ -1657,6 +1690,16 @@ static void flow_record_print_json (const struct flow_record *record) {
     if (rec->exp_type) {
         zprintf(output, ",\"x\":\"%c\"", rec->exp_type);
     }
+
+    zprintf(output, ",\"bacnet_num_confirmed_req\":%u", record->bacnet_source.num_confirmed_req);
+    zprintf(output, ",\"bacnet_num_unconfirmed_req\":%u", record->bacnet_source.num_unconfirmed_req);
+    zprintf(output, ",\"bacnet_num_unconfirmed_req_broadcast\":%u", record->bacnet_source.num_unconfirmed_req_broadcast);
+    zprintf(output, ",\"bacnet_num_simple_ack\":%u", record->bacnet_source.num_simple_ack);
+    zprintf(output, ",\"bacnet_num_complex_ack\":%u", record->bacnet_source.num_complex_ack);
+    zprintf(output, ",\"bacnet_num_segment_ack\":%u", record->bacnet_source.num_segment_ack);
+    zprintf(output, ",\"bacnet_num_bvlc_foreign_request\":%u", record->bacnet_source.num_bvlc_foreign_request);
+    zprintf(output, ",\"bacnet_num_bvlc_result\":%u", record->bacnet_source.num_bvlc_result);
+
 
     zprintf(output, "}\n");
 

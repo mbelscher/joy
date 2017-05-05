@@ -52,6 +52,7 @@
 #include "tls.h"
 #include "nfv9.h"
 #include "ipfix.h"
+#include "bacnet.h"
 #include "config.h"
 
 /*
@@ -773,6 +774,13 @@ process_udp (const struct pcap_pkthdr *header, const void *udp_start, int udp_le
       process_ipfix(payload, size_payload, record);
     }
 
+    /* if packet has port 59511 or 47808 process it as BACnet */
+    if (size_payload && (key->dp == BACNET_PORT_1 ||
+			 key->dp == BACNET_PORT_2)) {
+      process_bacnet(payload, size_payload, record);
+    }
+
+
     return record;
 }
 
@@ -907,7 +915,8 @@ void process_packet (unsigned char *ignore, const struct pcap_pkthdr *header,
     unsigned char proto = 0;
 
     /* declare pointers to packet headers */
-    const struct ip_hdr *ip;              
+    const struct ip_hdr *ip;
+    const struct ethernet_hdr *ethernet;
     unsigned int transport_len;
     unsigned int ip_hdr_len;
     const void *transport_start;
@@ -919,7 +928,8 @@ void process_packet (unsigned char *ignore, const struct pcap_pkthdr *header,
     }
     //  packet_count++;
   
-    // ethernet = (struct ethernet_hdr*)(packet);
+    ethernet = (struct ethernet_hdr*)(packet);
+    
   
     /* define/compute ip header offset */
     ip = (struct ip_hdr*)(packet + ETHERNET_HDR_LEN);
@@ -955,6 +965,8 @@ void process_packet (unsigned char *ignore, const struct pcap_pkthdr *header,
         key.sa = ip->ip_src;
         key.da = ip->ip_dst;
         proto = key.prot = ip->ip_prot;  
+        memcpy(&key.oui_sa, &ethernet->src_addr, OUI_LEN);
+        memcpy(&key.oui_da, &ethernet->dst_addr, OUI_LEN);
 
     }  else {
         // fprintf(info, "found IP fragment (offset: %02x)\n", ip_fragment_offset(ip));
@@ -965,6 +977,8 @@ void process_packet (unsigned char *ignore, const struct pcap_pkthdr *header,
         key.sa = ip->ip_src;
         key.da = ip->ip_dst;
         proto = key.prot = IPPROTO_IP;
+        memcpy(&key.oui_sa, &ethernet->src_addr, OUI_LEN);
+        memcpy(&key.oui_da, &ethernet->dst_addr, OUI_LEN);
     }  
     
     /* determine transport protocol and handle appropriately */
@@ -989,6 +1003,7 @@ void process_packet (unsigned char *ignore, const struct pcap_pkthdr *header,
             break;
     }
 
+    
     /* apply IP-specific feature processing */
     if (record != NULL) {
         update_all_ip_features(ip_feature_list);

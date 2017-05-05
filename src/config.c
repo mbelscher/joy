@@ -261,6 +261,8 @@ static int config_parse_command (struct configuration *config,
     } else if (match(command, "exe")) {
         parse_check(parse_bool(&config->report_exe, arg, num));
 
+    } else if (match(command, "oui")) {
+	parse_check(parse_bool(&config->oui, arg, num));
     }
 
     config_all_features_bool(feature_list);
@@ -444,6 +446,7 @@ void config_print (FILE *f, const struct configuration *c) {
     fprintf(f, "classify = %u\n", c->include_classifier);
     fprintf(f, "idp = %u\n", c->idp);
     fprintf(f, "exe = %u\n", c->report_exe);
+    fprintf(f, "oui = %u\n", c->oui);
     fprintf(f, "anon = %s\n", val(c->anon_addrs_file));
     fprintf(f, "useranon = %s\n", val(c->anon_http_file));
     fprintf(f, "bpf = %s\n", val(c->bpf_filter_exp));
@@ -488,6 +491,7 @@ void config_print_json (zfile f, const struct configuration *c) {
     zprintf(f, "\"classify\":%u,", c->include_classifier);
     zprintf(f, "\"idp\":%u,", c->idp);
     zprintf(f, "\"exe\":%u,", c->report_exe);
+    zprintf(f, "\"oui\":%u,", c->oui);
     zprintf(f, "\"anon\":\"%s\",", val(c->anon_addrs_file));
     zprintf(f, "\"useranon\":\"%s\",", val(c->anon_http_file));
     zprintf(f, "\"bpf\":\"%s\",", val(c->bpf_filter_exp));

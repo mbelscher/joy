@@ -54,6 +54,7 @@
 /** ethernet header */
 #define ETHERNET_HDR_LEN 14
 #define ETHERNET_ADR_LEN  6
+#define OUI_LEN           3
 
 /** ethernet header structure */
 struct ethernet_hdr {
