@@ -52,7 +52,6 @@
 #include "anon.h"     /* address anonymization           */
 #include "tls.h"      /* TLS awareness                   */
 #include "dns.h"      /* DNS awareness                   */
-#include "bacnet.h"
 #include "classify.h" /* inline classification           */
 #include "http.h"     /* http header data                */
 #include "procwatch.h"  /* process to flow mapping       */
@@ -60,7 +59,7 @@
 #include "config.h"     /* configuration                 */
 #include "output.h"     /* compressed output             */
 #include "ipfix.h"
-
+#include "bacnet.h"
 
 /* local prototypes */
 static void flow_record_delete(struct flow_record *r);
@@ -1691,14 +1690,15 @@ static void flow_record_print_json (const struct flow_record *record) {
         zprintf(output, ",\"x\":\"%c\"", rec->exp_type);
     }
 
-    zprintf(output, ",\"bacnet_num_confirmed_req\":%u", record->bacnet_source.num_confirmed_req);
-    zprintf(output, ",\"bacnet_num_unconfirmed_req\":%u", record->bacnet_source.num_unconfirmed_req);
-    zprintf(output, ",\"bacnet_num_unconfirmed_req_broadcast\":%u", record->bacnet_source.num_unconfirmed_req_broadcast);
-    zprintf(output, ",\"bacnet_num_simple_ack\":%u", record->bacnet_source.num_simple_ack);
-    zprintf(output, ",\"bacnet_num_complex_ack\":%u", record->bacnet_source.num_complex_ack);
-    zprintf(output, ",\"bacnet_num_segment_ack\":%u", record->bacnet_source.num_segment_ack);
-    zprintf(output, ",\"bacnet_num_bvlc_foreign_request\":%u", record->bacnet_source.num_bvlc_foreign_request);
-    zprintf(output, ",\"bacnet_num_bvlc_result\":%u", record->bacnet_source.num_bvlc_result);
+    bacnet_print_flow_record_bacnet(&record->bacnet_source);
+//    zprintf(output, ",\"bacnet_num_confirmed_req\":%u", record->bacnet_source.num_confirmed_req);
+//    zprintf(output, ",\"bacnet_num_unconfirmed_req\":%u", record->bacnet_source.num_unconfirmed_req);
+//    zprintf(output, ",\"bacnet_num_unconfirmed_req_broadcast\":%u", record->bacnet_source.num_unconfirmed_req_broadcast);
+//    zprintf(output, ",\"bacnet_num_simple_ack\":%u", record->bacnet_source.num_simple_ack);
+//    zprintf(output, ",\"bacnet_num_complex_ack\":%u", record->bacnet_source.num_complex_ack);
+//    zprintf(output, ",\"bacnet_num_segment_ack\":%u", record->bacnet_source.num_segment_ack);
+//    zprintf(output, ",\"bacnet_num_bvlc_foreign_request\":%u", record->bacnet_source.num_bvlc_foreign_request);
+//    zprintf(output, ",\"bacnet_num_bvlc_result\":%u", record->bacnet_source.num_bvlc_result);
 
 
     zprintf(output, "}\n");

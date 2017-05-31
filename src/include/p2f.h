@@ -57,6 +57,7 @@
 #include "modules.h"      
 #include "feature.h"
 #include "pkt.h"
+#include "bacnet_p2f.h"
 
 enum print_level { 
     none = 0, 
@@ -85,17 +86,6 @@ void *uploader_main(void* ptr);
 #define NUM_PKT_LEN 50
 #define MAX_NUM_PKT_LEN 200
 #define MAX_IDP 1500
-
-typedef struct flow_record_bacnet_ {
-    unsigned int num_confirmed_req;
-    unsigned int num_unconfirmed_req_broadcast;
-    unsigned int num_unconfirmed_req;
-    unsigned int num_simple_ack;
-    unsigned int num_complex_ack;
-    unsigned int num_segment_ack;
-    unsigned int num_bvlc_foreign_request;
-    unsigned int num_bvlc_result;
-} flow_record_bacnet;
 
 struct flow_record {
     struct flow_key key;                  /*!< identifies flow by 5-tuple          */
@@ -137,7 +127,7 @@ struct flow_record {
     unsigned int tcp_syn_size;
     unsigned char exp_type;
     unsigned char first_switched_found;   /*!< hack to make sure we only correct once */
-    flow_record_bacnet bacnet_source;
+    flow_record_bacnet_t bacnet_source;
   
     define_all_features(feature_list);    /*!< define all features listed in feature.h */
   
